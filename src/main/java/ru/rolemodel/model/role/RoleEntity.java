@@ -2,12 +2,15 @@ package ru.rolemodel.model.role;
 
 import org.springframework.context.annotation.Role;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by VBelov on 21.10.2017.
  */
-public class RoleEntity {
+public class RoleEntity implements Serializable{
+    private static final long serialVersionUID = 3796813264238036558L;
+
     private Integer id;
     private String idService;
     private String roleName;

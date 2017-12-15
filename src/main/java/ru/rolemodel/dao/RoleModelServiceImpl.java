@@ -47,12 +47,13 @@ public class RoleModelServiceImpl implements RoleModelService {
         hashOperations = redisTemplate.opsForList();    }
 
     public String saveRoles(RoleEntity roleEntity) {
-        hashOperations.leftPush(KEY, roleEntity.getIdService(), roleEntity);
+        hashOperations.leftPush(new Key(KEY, roleEntity.getIdService()).toString(), roleEntity);
         return "success";
     }
 
     public List<RoleEntity> getRoles(String idService) {
-        List<Object> roles = hashOperations.range(new Key(KEY, idService).toString(), 0, hashOperations.size(KEY));
+        String key =new Key(KEY, idService).toString();
+        List<Object> roles = hashOperations.range(key, 0, hashOperations.size(key));
         List<RoleEntity> roleEntities=new ArrayList<RoleEntity>();
         for(Object role: roles){
             roleEntities.add((RoleEntity)role);

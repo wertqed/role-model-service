@@ -4,14 +4,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.rolemodel.common.BaseController;
 import ru.rolemodel.dto.roles.ListUsersDto;
 import ru.rolemodel.model.user.UserEntity;
 import ru.rolemodel.model.user.UserEntityService;
+import ru.rolemodel.model.user.UserPermissionSources;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.ArrayList;
@@ -48,7 +46,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "addUsers")
     @RequestMapping(value= "/addUsers", method = RequestMethod.POST)
-    public String addUserRoles(List<UserEntity> userEntities){
+    public String addUsersRoles(List<UserEntity> userEntities){
         return userEntityService.addUsers(userEntities);
 
     }
@@ -59,8 +57,17 @@ public class UserController extends BaseController {
         return userEntityService.addUser(userEntity);
     }
 
-    @RequestMapping(value= "/addUser", method = RequestMethod.POST)
-    public String addUserPermissionSources(UserEntity userEntity){
-        return "success;";
+    @RequestMapping(value= "/addUserPermissionSources", method = RequestMethod.POST)
+    public String addUserPermissionSources(UserPermissionSources userPermissionSources){
+        return userEntityService.addUserPermissionSources(userPermissionSources);
+    }
+
+    @ApiOperation(value = "hasPermissionSource")
+    @RequestMapping(value = "/hasPermissionSource", method = RequestMethod.GET)
+    public Boolean hasPermissionSource(@RequestParam(value = "userId") Long userId,
+                                  @RequestParam(value = "idService") String idService,
+                                  @RequestParam(value = "namePermission") String namePermission,
+                                  @RequestParam(value = "idSource") Long idSource) {
+        return userEntityService.hasPermissionSource(userId, idService, namePermission, idSource);
     }
 }

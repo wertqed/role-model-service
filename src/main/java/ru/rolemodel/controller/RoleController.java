@@ -46,7 +46,7 @@ public class RoleController extends BaseController {
 
     @ApiOperation(value = "addRolePermissions")
     @RequestMapping(value = "/addRolePermissions", method = RequestMethod.POST)
-    public String addRolePermissions(@RequestBody RoleEntity roleEntity) {
+    public String addRolePermissions(RoleEntity roleEntity) {
         try {
             return roleModelService.saveRoles(roleEntity);
         }catch (Exception e){
