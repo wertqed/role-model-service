@@ -13,6 +13,7 @@ import ru.rolemodel.model.role.RoleModelService;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by VBelov on 03.12.2017.
@@ -47,6 +48,15 @@ public class RoleModelServiceImpl implements RoleModelService {
         hashOperations = redisTemplate.opsForList();    }
 
     public String saveRoles(RoleEntity roleEntity) {
+        String key = new Key(KEY, roleEntity.getIdService()).toString();
+        List<RoleEntity> roles =getRoles(roleEntity.getIdService());
+        for(RoleEntity role: roles){
+            if(Objects.equals(role.getId(), roleEntity.getId())){
+                hashOperations.remove(key, 1, role);
+                hashOperations.leftPush(key, roleEntity);
+                return "success";
+            }
+        }
         hashOperations.leftPush(new Key(KEY, roleEntity.getIdService()).toString(), roleEntity);
         return "success";
     }
@@ -54,7 +64,7 @@ public class RoleModelServiceImpl implements RoleModelService {
     public List<RoleEntity> getRoles(String idService) {
         String key =new Key(KEY, idService).toString();
         List<Object> roles = hashOperations.range(key, 0, hashOperations.size(key));
-        List<RoleEntity> roleEntities=new ArrayList<RoleEntity>();
+        List<RoleEntity> roleEntities=new ArrayList<>();
         for(Object role: roles){
             roleEntities.add((RoleEntity)role);
         }

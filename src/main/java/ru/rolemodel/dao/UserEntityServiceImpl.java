@@ -7,7 +7,6 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
 import ru.rolemodel.model.user.UserEntity;
 import ru.rolemodel.model.user.UserEntityService;
@@ -15,8 +14,8 @@ import ru.rolemodel.model.user.UserPermissionSources;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -59,20 +58,29 @@ public class UserEntityServiceImpl implements UserEntityService {
 
     public String addUsers(List<UserEntity> userEntities) {
         for (UserEntity user : userEntities) {
-            hashOperations.leftPush(new Key(KEY, user.getIdService()).toString(), user);
+            addUser(user);
         }
         return "success";
     }
 
     public String addUser(UserEntity userEntity) {
-        hashOperations.leftPush(new Key(KEY, userEntity.getIdService()).toString(), userEntity);
+        String key=new Key(KEY, userEntity.getIdService()).toString();
+        List<UserEntity> users =getUsers(userEntity.getIdService());
+        for(UserEntity user: users){
+            if(Objects.equals(user.getId(), userEntity.getId())){
+                hashOperations.remove(key, 1, user);
+                hashOperations.leftPush(key, userEntity);
+                return "success";
+            }
+        }
+        hashOperations.leftPush(key, userEntity);
         return "success";
     }
 
     public List<UserEntity> getUsers(String idService) {
         String key = new Key(KEY, idService).toString();
         List<Object> users = hashOperations.range(key, 0, hashOperations.size(key));
-        List<UserEntity> userEntities = new ArrayList<UserEntity>();
+        List<UserEntity> userEntities = new ArrayList<>();
         for (Object user : users) {
             userEntities.add((UserEntity) user);
         }
@@ -91,6 +99,15 @@ public class UserEntityServiceImpl implements UserEntityService {
 
     @Override
     public String addUserPermissionSources(UserPermissionSources userPermissionSources) {
+        String key = new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString();
+        List<Object> permissions = hashOperationsSources.range(key, 0, hashOperations.size(key));
+        for(Object permiss: permissions){
+            if(Objects.equals(((UserPermissionSources) permiss).getUserId(), userPermissionSources.getUserId())
+                    && Objects.equals(((UserPermissionSources) permiss).getIdService(), userPermissionSources.getIdService()))
+                hashOperationsSources.remove(key, 1, permiss);
+            hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
+            return "success";
+        }
         hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
         return "success";
     }
