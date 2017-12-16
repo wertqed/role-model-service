@@ -17,6 +17,8 @@ public interface UserEntityService {
 
     String addUser(UserEntity userEntity);
 
+    String deleteUser(Integer userId, String idService);
+
     List<UserEntity> getUsers(String idService);
 
     List<String> getPermissions(String idService, Integer idUser);
@@ -24,4 +26,6 @@ public interface UserEntityService {
     String addUserPermissionSources(UserPermissionSources userPermissionSources);
 
     Boolean hasPermissionSource(Long userId, String idService, String namePermission, Long idSource);
+
+    String deleteUserPermissionSources(Long userId, String idService, String namePermission);
 }

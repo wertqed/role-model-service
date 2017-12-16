@@ -53,7 +53,7 @@ public class UserEntityServiceImpl implements UserEntityService {
     @PostConstruct
     private void init() {
         hashOperations = redisTemplate.opsForList();
-        hashOperationsSources= redisTemplate.opsForList();
+        hashOperationsSources = redisTemplate.opsForList();
     }
 
     public String addUsers(List<UserEntity> userEntities) {
@@ -64,10 +64,10 @@ public class UserEntityServiceImpl implements UserEntityService {
     }
 
     public String addUser(UserEntity userEntity) {
-        String key=new Key(KEY, userEntity.getIdService()).toString();
-        List<UserEntity> users =getUsers(userEntity.getIdService());
-        for(UserEntity user: users){
-            if(Objects.equals(user.getId(), userEntity.getId())){
+        String key = new Key(KEY, userEntity.getIdService()).toString();
+        List<UserEntity> users = getUsers(userEntity.getIdService());
+        for (UserEntity user : users) {
+            if (Objects.equals(user.getId(), userEntity.getId())) {
                 hashOperations.remove(key, 1, user);
                 hashOperations.leftPush(key, userEntity);
                 return "success";
@@ -75,6 +75,19 @@ public class UserEntityServiceImpl implements UserEntityService {
         }
         hashOperations.leftPush(key, userEntity);
         return "success";
+    }
+
+    @Override
+    public String deleteUser(Integer userId, String idService) {
+        String key = new Key(KEY, idService).toString();
+        List<UserEntity> users = getUsers(idService);
+        for (UserEntity user : users) {
+            if (Objects.equals(user.getId(), userId)) {
+                hashOperations.remove(key, 1, user);
+                return "success";
+            }
+        }
+        return "Failed";
     }
 
     public List<UserEntity> getUsers(String idService) {
@@ -101,12 +114,14 @@ public class UserEntityServiceImpl implements UserEntityService {
     public String addUserPermissionSources(UserPermissionSources userPermissionSources) {
         String key = new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString();
         List<Object> permissions = hashOperationsSources.range(key, 0, hashOperations.size(key));
-        for(Object permiss: permissions){
-            if(Objects.equals(((UserPermissionSources) permiss).getUserId(), userPermissionSources.getUserId())
-                    && Objects.equals(((UserPermissionSources) permiss).getIdService(), userPermissionSources.getIdService()))
+        for (Object permiss : permissions) {
+            if (Objects.equals(((UserPermissionSources) permiss).getUserId(), userPermissionSources.getUserId())
+                    && Objects.equals(((UserPermissionSources) permiss).getIdService(), userPermissionSources.getIdService())
+                    && Objects.equals(((UserPermissionSources) permiss).getNamePermission(), userPermissionSources.getNamePermission())) {
                 hashOperationsSources.remove(key, 1, permiss);
-            hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
-            return "success";
+                hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
+                return "success";
+            }
         }
         hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
         return "success";
@@ -116,13 +131,27 @@ public class UserEntityServiceImpl implements UserEntityService {
     public Boolean hasPermissionSource(Long userId, String idService, String namePermission, Long idSource) {
         String key = new Key(KEY_SOURCES, idService).toString();
         List<Object> userPermissionSources = hashOperationsSources.range(key, 0, hashOperations.size(key));
-        for(Object permis: userPermissionSources){
-            if(((UserPermissionSources)permis).getUserId().equals(userId)
-                    && ((UserPermissionSources)permis).getNamePermission().equals(namePermission)
-                    && ((UserPermissionSources)permis).getIdSources().contains(idSource)){
+        for (Object permis : userPermissionSources) {
+            if (((UserPermissionSources) permis).getUserId().equals(userId)
+                    && ((UserPermissionSources) permis).getNamePermission().equals(namePermission)
+                    && ((UserPermissionSources) permis).getIdSources().contains(idSource)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public String deleteUserPermissionSources(Long userId, String idService, String namePermission) {
+        String key = new Key(KEY_SOURCES, idService).toString();
+        List<Object> userPermissionSources = hashOperationsSources.range(key, 0, hashOperations.size(key));
+        for (Object permiss : userPermissionSources) {
+            if (((UserPermissionSources) permiss).getUserId().equals(userId)
+                    && ((UserPermissionSources) permiss).getNamePermission().equals(namePermission)) {
+                hashOperationsSources.remove(key, 1, permiss);
+                return "success";
+            }
+        }
+        return "Failed";
     }
 }

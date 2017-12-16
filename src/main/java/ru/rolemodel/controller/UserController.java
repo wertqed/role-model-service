@@ -57,6 +57,12 @@ public class UserController extends BaseController {
         return userEntityService.addUser(userEntity);
     }
 
+    @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
+    public String deleteUser(@RequestParam(value = "userId") Integer userId,
+                             @RequestParam(value = "idService") String idService) {
+        return userEntityService.deleteUser(userId, idService);
+    }
+
     @RequestMapping(value= "/addUserPermissionSources", method = RequestMethod.POST)
     public String addUserPermissionSources(UserPermissionSources userPermissionSources){
         return userEntityService.addUserPermissionSources(userPermissionSources);
@@ -69,5 +75,12 @@ public class UserController extends BaseController {
                                   @RequestParam(value = "namePermission") String namePermission,
                                   @RequestParam(value = "idSource") Long idSource) {
         return userEntityService.hasPermissionSource(userId, idService, namePermission, idSource);
+    }
+
+    @RequestMapping(value = "/deleteUserPermissionSources", method = RequestMethod.DELETE)
+    public String deleteUserPermissionSources(@RequestParam(value = "userId") Long userId,
+                                              @RequestParam(value = "idService") String idService,
+                                              @RequestParam(value = "namePermission") String namePermission){
+        return userEntityService.deleteUserPermissionSources(userId, idService, namePermission);
     }
 }

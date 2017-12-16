@@ -8,4 +8,5 @@ import java.util.List;
 public interface RoleModelService {
     String saveRoles(RoleEntity roleEntity);
     List<RoleEntity> getRoles(String isService);
+    String deleteRole(String idService, Long idRole);
 }

@@ -35,10 +35,10 @@ public class RoleController extends BaseController {
 
     @ApiOperation(value = "getRolesOfService")
     @RequestMapping(value = "/get/{idService}", method = RequestMethod.GET)
-    public List<RoleEntity> getRoles(@PathVariable(value="idService") String idService) {
+    public List<RoleEntity> getRoles(@PathVariable(value = "idService") String idService) {
         try {
             return roleModelService.getRoles(idService);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return Collections.emptyList();
         }
@@ -49,9 +49,16 @@ public class RoleController extends BaseController {
     public String addRolePermissions(RoleEntity roleEntity) {
         try {
             return roleModelService.saveRoles(roleEntity);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return "Failed";
         }
     }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
+    public String deleteRole(@RequestParam(value = "roleId") Long roleId,
+                             @RequestParam(value = "idService") String idService) {
+        return roleModelService.deleteRole(idService, roleId);
+    }
+
 }

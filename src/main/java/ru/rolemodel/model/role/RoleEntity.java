@@ -11,12 +11,12 @@ import java.util.List;
 public class RoleEntity implements Serializable{
     private static final long serialVersionUID = 3796813264238036558L;
 
-    private Integer id;
+    private Long id;
     private String idService;
     private String roleName;
     private List<String> permissions;
 
-    public RoleEntity(Integer id, String roleName, List<String> permissions){
+    public RoleEntity(Long id, String roleName, List<String> permissions){
         this.id = id;
         this.roleName = roleName;
         this.permissions = permissions;
@@ -25,11 +25,11 @@ public class RoleEntity implements Serializable{
 
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

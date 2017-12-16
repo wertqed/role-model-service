@@ -70,4 +70,17 @@ public class RoleModelServiceImpl implements RoleModelService {
         }
         return roleEntities;
     }
+
+    @Override
+    public String deleteRole(String idService, Long idRole) {
+        String key =new Key(KEY, idService).toString();
+        List<RoleEntity> roles =getRoles(idService);
+        for(RoleEntity role: roles){
+            if(Objects.equals(role.getId(), idRole)){
+                hashOperations.remove(key, 1, role);
+                return "success";
+            }
+        }
+        return "Failed";
+    }
 }
