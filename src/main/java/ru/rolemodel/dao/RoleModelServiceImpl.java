@@ -72,7 +72,7 @@ public class RoleModelServiceImpl implements RoleModelService {
     }
 
     @Override
-    public String deleteRole(String idService, Long idRole) {
+    public String deleteRole(String idService, Integer idRole) {
         String key =new Key(KEY, idService).toString();
         List<RoleEntity> roles =getRoles(idService);
         for(RoleEntity role: roles){

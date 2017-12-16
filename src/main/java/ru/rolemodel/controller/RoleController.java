@@ -56,7 +56,7 @@ public class RoleController extends BaseController {
     }
 
     @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
-    public String deleteRole(@RequestParam(value = "roleId") Long roleId,
+    public String deleteRole(@RequestParam(value = "roleId") Integer roleId,
                              @RequestParam(value = "idService") String idService) {
         return roleModelService.deleteRole(idService, roleId);
     }
