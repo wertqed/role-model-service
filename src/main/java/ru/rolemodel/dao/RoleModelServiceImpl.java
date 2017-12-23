@@ -103,14 +103,17 @@ public class RoleModelServiceImpl implements RoleModelService {
                 if (Objects.equals(user.getId(), iduser)) {
                     if (!user.getRoleEntities().contains(roleUsers.getId())) {
                         user.getRoleEntities().add(roleUsers.getId());
-                        userEntityService.addUser(user);
-                        existUser= true;
-                        break;
+                        CommonResult resAdd = userEntityService.addUser(user);
+                        if (!resAdd.getSuccess()) {
+                            return resAdd;
+                        }
                     }
+                    existUser = true;
+                    break;
                 }
             }
-            if(!existUser){
-                return new CommonResult(false,"Пользователь с id:" + iduser);
+            if (!existUser) {
+                return new CommonResult(false, "Пользователь с id:" + iduser);
             }
         }
         return new CommonResult(true, "Пользователи успешно добавлены!");
@@ -118,9 +121,9 @@ public class RoleModelServiceImpl implements RoleModelService {
 
     @Override
     public CommonResult getRoleUsers(String idService, Integer idRole) {
-        List<UserEntity> users= userEntityService.getUsers(idService);
-        List<UserEntity> findedUsers= new ArrayList<>();
-        for(UserEntity user: users){
+        List<UserEntity> users = userEntityService.getUsers(idService);
+        List<UserEntity> findedUsers = new ArrayList<>();
+        for (UserEntity user : users) {
             user.getRoleEntities().contains(idRole);
             findedUsers.add(user);
         }
