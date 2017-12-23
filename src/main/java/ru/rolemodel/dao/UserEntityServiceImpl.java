@@ -7,15 +7,15 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import ru.rolemodel.common.CommonResult;
+import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
 import ru.rolemodel.model.user.UserEntity;
 import ru.rolemodel.model.user.UserEntityService;
 import ru.rolemodel.model.user.UserPermissionSources;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -56,38 +56,60 @@ public class UserEntityServiceImpl implements UserEntityService {
         hashOperationsSources = redisTemplate.opsForList();
     }
 
-    public String addUsers(List<UserEntity> userEntities) {
+    public CommonResult addUsers(List<UserEntity> userEntities) {
         for (UserEntity user : userEntities) {
             addUser(user);
         }
-        return "success";
+        return new CommonResult(true, "Список пользователей успешно добавлен");
     }
 
-    public String addUser(UserEntity userEntity) {
+    public CommonResult addUser(UserEntity userEntity) {
         String key = new Key(KEY, userEntity.getIdService()).toString();
         List<UserEntity> users = getUsers(userEntity.getIdService());
+        List<RoleEntity> roles = roleModelService.getRoles(userEntity.getIdService());
+        List<Integer> hasntRoles = new ArrayList<>();
+        for (Integer roleId : userEntity.getRoleEntities()) {
+            Boolean hasRole=false;
+            for (RoleEntity role : roles) {
+                if (Objects.equals(role.getId(), roleId)) {
+                    hasRole =true;
+                    break;
+                }
+            }
+            if(!hasRole){
+                hasntRoles.add(roleId);
+            }
+        }
+        if(hasntRoles.size()!=0){
+            String temp=" ";
+            for(Integer id: hasntRoles){
+                temp += id.toString()+ ", ";
+            }
+            return new CommonResult(false, "Не найдено ролей со следующими id:" + temp);
+        }
+
         for (UserEntity user : users) {
             if (Objects.equals(user.getId(), userEntity.getId())) {
                 hashOperations.remove(key, 1, user);
                 hashOperations.leftPush(key, userEntity);
-                return "success";
+                return new CommonResult(true, "Пользователь успешно обновлен");
             }
         }
         hashOperations.leftPush(key, userEntity);
-        return "success";
+        return new CommonResult(true, "Пользователь успешно добавлен");
     }
 
     @Override
-    public String deleteUser(Integer userId, String idService) {
+    public CommonResult deleteUser(Integer userId, String idService) {
         String key = new Key(KEY, idService).toString();
         List<UserEntity> users = getUsers(idService);
         for (UserEntity user : users) {
             if (Objects.equals(user.getId(), userId)) {
                 hashOperations.remove(key, 1, user);
-                return "success";
+                return new CommonResult(true, "Пользователь успешно удален!");
             }
         }
-        return "Failed";
+        return new CommonResult(false, "При удалении пользователя произошла ошибка! Пользователь с id = " + userId + " не найден!");
     }
 
     public List<UserEntity> getUsers(String idService) {
@@ -100,31 +122,46 @@ public class UserEntityServiceImpl implements UserEntityService {
         return userEntities;
     }
 
-    public List<String> getPermissions(String idService, Integer idUser) {
+    public CommonResult getPermissions(String idService, Integer idUser) {
         String key = new Key(KEY, idService).toString();
         List<Object> users = hashOperations.range(key, 0, hashOperations.size(key));
         List<Object> findUsers = users.stream().filter((userEntity) -> ((UserEntity) userEntity).getId().equals(idUser)).collect(Collectors.toList());
+        if(findUsers.size() == 0){
+            return new CommonResult(false, "Не найдено пользователя с id: "+ idUser);
+        }
         List<Integer> roles = ((UserEntity) findUsers.get(0)).getRoleEntities();
         List<String> permissions = new ArrayList<>();
         roleModelService.getRoles(idService).stream().filter(role -> roles.contains(role.getId())).forEach(role -> permissions.addAll(role.getPermissions()));
-        return permissions;
+        return new CommonResult(permissions, true);
     }
 
     @Override
-    public String addUserPermissionSources(UserPermissionSources userPermissionSources) {
+    public CommonResult addUserPermissionSources(UserPermissionSources userPermissionSources) {
         String key = new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString();
         List<Object> permissions = hashOperationsSources.range(key, 0, hashOperations.size(key));
+        List<RoleEntity> roles = roleModelService.getRoles(userPermissionSources.getIdService());
+        Boolean hasNamePermiss = false;
+        for (RoleEntity role : roles) {
+            for (String permission : role.getPermissions()) {
+                if (Objects.equals(permission, userPermissionSources.getNamePermission())) {
+                    hasNamePermiss = true;
+                }
+            }
+        }
+        if (!hasNamePermiss) {
+            return new CommonResult(false, "Права с именем " + userPermissionSources.getNamePermission() + " не существует");
+        }
         for (Object permiss : permissions) {
             if (Objects.equals(((UserPermissionSources) permiss).getUserId(), userPermissionSources.getUserId())
                     && Objects.equals(((UserPermissionSources) permiss).getIdService(), userPermissionSources.getIdService())
                     && Objects.equals(((UserPermissionSources) permiss).getNamePermission(), userPermissionSources.getNamePermission())) {
                 hashOperationsSources.remove(key, 1, permiss);
                 hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
-                return "success";
+                return new CommonResult(true, "Для права успешно обновлены сущности");
             }
         }
         hashOperationsSources.leftPush(new Key(KEY_SOURCES, userPermissionSources.getIdService()).toString(), userPermissionSources);
-        return "success";
+        return new CommonResult(true, "Для права успешно добавлены сущности");
     }
 
     @Override
@@ -142,16 +179,16 @@ public class UserEntityServiceImpl implements UserEntityService {
     }
 
     @Override
-    public String deleteUserPermissionSources(Long userId, String idService, String namePermission) {
+    public CommonResult deleteUserPermissionSources(Long userId, String idService, String namePermission) {
         String key = new Key(KEY_SOURCES, idService).toString();
         List<Object> userPermissionSources = hashOperationsSources.range(key, 0, hashOperations.size(key));
         for (Object permiss : userPermissionSources) {
             if (((UserPermissionSources) permiss).getUserId().equals(userId)
                     && ((UserPermissionSources) permiss).getNamePermission().equals(namePermission)) {
                 hashOperationsSources.remove(key, 1, permiss);
-                return "success";
+                return new CommonResult(true, "Успешно удалены сущности для права: " + namePermission);
             }
         }
-        return "Failed";
+        return new CommonResult(false, "Права с именем " + namePermission + " не найдено");
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import ru.rolemodel.common.CommonResult;
 import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
 
@@ -30,57 +31,60 @@ public class RoleModelServiceImpl implements RoleModelService {
 
     private ListOperations<String, Object> hashOperations;
 
-    private class Key{
+    private class Key {
         private String packageName;
         private String idService;
-        public Key(String packageName, String idService){
-            this.packageName=packageName;
-            this.idService=idService;
+
+        public Key(String packageName, String idService) {
+            this.packageName = packageName;
+            this.idService = idService;
         }
+
         @Override
-        public String toString(){
-            return packageName+":"+idService;
+        public String toString() {
+            return packageName + ":" + idService;
         }
     }
 
     @PostConstruct
     private void init() {
-        hashOperations = redisTemplate.opsForList();    }
+        hashOperations = redisTemplate.opsForList();
+    }
 
-    public String saveRoles(RoleEntity roleEntity) {
+    public CommonResult saveRoles(RoleEntity roleEntity) {
         String key = new Key(KEY, roleEntity.getIdService()).toString();
-        List<RoleEntity> roles =getRoles(roleEntity.getIdService());
-        for(RoleEntity role: roles){
-            if(Objects.equals(role.getId(), roleEntity.getId())){
+        List<RoleEntity> roles = getRoles(roleEntity.getIdService());
+        for (RoleEntity role : roles) {
+            if (Objects.equals(role.getId(), roleEntity.getId())) {
                 hashOperations.remove(key, 1, role);
                 hashOperations.leftPush(key, roleEntity);
-                return "success";
+                return new CommonResult(true, "Изменена роль");
             }
         }
         hashOperations.leftPush(new Key(KEY, roleEntity.getIdService()).toString(), roleEntity);
-        return "success";
+        return new CommonResult(true, "Добавлена роль");
     }
 
     public List<RoleEntity> getRoles(String idService) {
-        String key =new Key(KEY, idService).toString();
+        String key = new Key(KEY, idService).toString();
         List<Object> roles = hashOperations.range(key, 0, hashOperations.size(key));
-        List<RoleEntity> roleEntities=new ArrayList<>();
-        for(Object role: roles){
-            roleEntities.add((RoleEntity)role);
+        List<RoleEntity> roleEntities = new ArrayList<>();
+        for (Object role : roles) {
+            roleEntities.add((RoleEntity) role);
         }
         return roleEntities;
     }
 
     @Override
-    public String deleteRole(String idService, Integer idRole) {
-        String key =new Key(KEY, idService).toString();
-        List<RoleEntity> roles =getRoles(idService);
-        for(RoleEntity role: roles){
-            if(Objects.equals(role.getId(), idRole)){
+    public CommonResult deleteRole(String idService, Integer idRole) {
+        String key = new Key(KEY, idService).toString();
+        List<RoleEntity> roles = getRoles(idService);
+        for (RoleEntity role : roles) {
+            if (Objects.equals(role.getId(), idRole)) {
                 hashOperations.remove(key, 1, role);
-                return "success";
+                return new CommonResult(true, "Удалена роль:" + idRole);
             }
         }
-        return "Failed";
+        return new CommonResult(false, "Ошибка при удалении роли! Роли с id =" + idRole + " не существует!");
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import ru.rolemodel.common.BaseController;
+import ru.rolemodel.common.CommonResult;
 import ru.rolemodel.dto.roles.ListUsersDto;
 import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
@@ -46,19 +47,24 @@ public class RoleController extends BaseController {
 
     @ApiOperation(value = "addRolePermissions")
     @RequestMapping(value = "/addRolePermissions", method = RequestMethod.POST)
-    public String addRolePermissions(RoleEntity roleEntity) {
+    public CommonResult addRolePermissions(RoleEntity roleEntity) {
         try {
             return roleModelService.saveRoles(roleEntity);
         } catch (Exception e) {
             e.printStackTrace();
-            return "Failed";
+            return new CommonResult(false, "Ошибка при добавлении роли!");
         }
     }
 
     @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
-    public String deleteRole(@RequestParam(value = "roleId") Integer roleId,
+    public CommonResult deleteRole(@RequestParam(value = "roleId") Integer roleId,
                              @RequestParam(value = "idService") String idService) {
-        return roleModelService.deleteRole(idService, roleId);
+        try {
+            return roleModelService.deleteRole(idService, roleId);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new CommonResult(false, "Ошибка при удалении роли!");
+        }
     }
 
 }
