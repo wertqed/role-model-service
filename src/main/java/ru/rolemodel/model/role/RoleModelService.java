@@ -11,4 +11,6 @@ public interface RoleModelService {
     CommonResult saveRoles(RoleEntity roleEntity);
     List<RoleEntity> getRoles(String isService);
     CommonResult deleteRole(String idService, Integer idRole);
+    CommonResult addRoleUsers(RoleUsers roleUsers);
+    CommonResult getRoleUsers(String idService, Integer idRole);
 }

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import ru.rolemodel.common.CommonResult;
 import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
+import ru.rolemodel.model.role.RoleUsers;
+import ru.rolemodel.model.user.UserEntity;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -30,6 +32,9 @@ public class RoleModelServiceImpl implements RoleModelService {
     private RedisTemplate<String, Object> redisTemplate;
 
     private ListOperations<String, Object> hashOperations;
+
+    @Autowired
+    private UserEntityServiceImpl userEntityService;
 
     private class Key {
         private String packageName;
@@ -87,4 +92,39 @@ public class RoleModelServiceImpl implements RoleModelService {
         }
         return new CommonResult(false, "Ошибка при удалении роли! Роли с id =" + idRole + " не существует!");
     }
+
+    @Override
+    public CommonResult addRoleUsers(RoleUsers roleUsers) {
+        List<UserEntity> users = userEntityService.getUsers(roleUsers.getIdService());
+
+        for (Integer iduser : roleUsers.getUsers()) {
+            Boolean existUser = false;
+            for (UserEntity user : users) {
+                if (Objects.equals(user.getId(), iduser)) {
+                    if (!user.getRoleEntities().contains(roleUsers.getId())) {
+                        user.getRoleEntities().add(roleUsers.getId());
+                        userEntityService.addUser(user);
+                        existUser= true;
+                        break;
+                    }
+                }
+            }
+            if(!existUser){
+                return new CommonResult(false,"Пользователь с id:" + iduser);
+            }
+        }
+        return new CommonResult(true, "Пользователи успешно добавлены!");
+    }
+
+    @Override
+    public CommonResult getRoleUsers(String idService, Integer idRole) {
+        List<UserEntity> users= userEntityService.getUsers(idService);
+        List<UserEntity> findedUsers= new ArrayList<>();
+        for(UserEntity user: users){
+            user.getRoleEntities().contains(idRole);
+            findedUsers.add(user);
+        }
+        return new CommonResult(findedUsers, true, "");
+    }
+
 }

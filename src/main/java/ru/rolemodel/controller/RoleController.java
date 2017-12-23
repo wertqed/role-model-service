@@ -10,6 +10,7 @@ import ru.rolemodel.common.CommonResult;
 import ru.rolemodel.dto.roles.ListUsersDto;
 import ru.rolemodel.model.role.RoleEntity;
 import ru.rolemodel.model.role.RoleModelService;
+import ru.rolemodel.model.role.RoleUsers;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Collections;
@@ -42,6 +43,25 @@ public class RoleController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
             return Collections.emptyList();
+        }
+    }
+
+    @RequestMapping(value = "/addRoleUsers", method = RequestMethod.POST)
+    public CommonResult addRoleUsers(RoleUsers roleUsers) {
+        try {
+            return roleModelService.addRoleUsers(roleUsers);
+        }catch (Exception e){
+            return new CommonResult(false, "При добавлении пользователей произошла ошибка");
+        }
+    }
+
+    @RequestMapping(value = "/getRoleUsers", method = RequestMethod.GET)
+    public CommonResult getRoleUsers(@RequestParam(value = "roleId") Integer roleId,
+                                     @RequestParam(value = "idService") String idService){
+        try {
+            return roleModelService.getRoleUsers(idService, roleId);
+        }catch (Exception e){
+            return new CommonResult(false, "При получении пользователей произошла ошибка");
         }
     }
 
